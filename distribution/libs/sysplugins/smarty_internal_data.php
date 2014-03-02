@@ -475,7 +475,7 @@ class Smarty_StringValue
 
     public $tainted = true;
 
-    public function __construct($value, $tainted = null) {
+    public function __construct($value, $tainted = true) {
         $this->tainted = $tainted === null || $tainted;
         if ($value instanceof Smarty_Variable) {
             $value = $value->value;
