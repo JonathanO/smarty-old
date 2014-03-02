@@ -23,7 +23,26 @@ require_once( SMARTY_PLUGINS_DIR .'shared.literal_compiler_param.php' );
  * @param array $params parameters
  * @return string with compiled code
  */
-function smarty_modifiercompiler_escape($params, $compiler)
+function smarty_modifiercompiler_escape($params, $compiler) {
+    $escaped = _smarty_modifiercompiler_escape_string($params, $compiler);
+
+    if ($escaped !== null) {
+        return 'new Smarty_StringValue(' . $escaped . ', false)';
+    }
+
+    // could not optimize |escape call, so fallback to regular plugin
+    if ($compiler->template->caching && ($compiler->tag_nocache | $compiler->nocache)) {
+        $compiler->template->required_plugins['nocache']['escape']['modifier']['file'] = SMARTY_PLUGINS_DIR .'modifier.escape.php';
+        $compiler->template->required_plugins['nocache']['escape']['modifier']['function'] = 'smarty_modifier_escape';
+    } else {
+        $compiler->template->required_plugins['compiled']['escape']['modifier']['file'] = SMARTY_PLUGINS_DIR .'modifier.escape.php';
+        $compiler->template->required_plugins['compiled']['escape']['modifier']['function'] = 'smarty_modifier_escape';
+    }
+
+    return 'smarty_modifier_escape(' . join( ', ', $params ) . ')';
+}
+
+function _smarty_modifiercompiler_escape_string($params, $compiler)
 {
     static $_double_encode = null;
     if ($_double_encode === null) {
@@ -110,15 +129,6 @@ function smarty_modifiercompiler_escape($params, $compiler)
     } catch (SmartyException $e) {
         // pass through to regular plugin fallback
     }
+    return null;
 
-    // could not optimize |escape call, so fallback to regular plugin
-    if ($compiler->template->caching && ($compiler->tag_nocache | $compiler->nocache)) {
-        $compiler->template->required_plugins['nocache']['escape']['modifier']['file'] = SMARTY_PLUGINS_DIR .'modifier.escape.php';
-        $compiler->template->required_plugins['nocache']['escape']['modifier']['function'] = 'smarty_modifier_escape';
-    } else {
-        $compiler->template->required_plugins['compiled']['escape']['modifier']['file'] = SMARTY_PLUGINS_DIR .'modifier.escape.php';
-        $compiler->template->required_plugins['compiled']['escape']['modifier']['function'] = 'smarty_modifier_escape';
-    }
-
-    return 'smarty_modifier_escape(' . join( ', ', $params ) . ')';
 }
